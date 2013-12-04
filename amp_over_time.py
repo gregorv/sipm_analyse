@@ -146,12 +146,17 @@ def process_frame(number, t, sig):
 
 
 def process_frame_quick(number, t, sig):
+    t_start = 200
     t, smooth_signal = integrate_signal(t, sig)
+    plt.plot(t, smooth_signal)
+    plt.savefig("test.png")
+    plt.clf()
     # Get events
     a = filter(lambda x: (x[1]-x[0]) > 2 or not x[2], flankenize(t, smooth_signal))
     b = filter(lambda x: not x[2] and (smooth_signal[x[1]] - smooth_signal[x[0]]) < -5, collapse_flanks(a))
+    c = filter(lambda x: int(t_start/(t[-1] - t[0])*len(t)) < x[0], b)
     events = []
-    for start_idx, end_idx, _ in b:
+    for start_idx, end_idx, _ in c:
         end_idx -= 3  # empiric offset
         events.append((t[end_idx],
                        sig[end_idx] - sig[start_idx]))
