@@ -73,6 +73,7 @@ def get_events(t, sig):
 def fit_decay(t, sig, t_ev, t_ev_next=None):
     global plot_count
     t_ev_idx = int((t_ev - t[0])/(t[-1] - t[0])*len(t))
+    #min_idx = max(t_ev_idx-10, 0)
     min_idx = max(t_ev_idx-10, 0)
     max_idx = min(t_ev_idx+50, len(t))
     if t_ev_next:
@@ -258,24 +259,27 @@ if __name__ == "__main__":
         def print_status():
             #elapsed_time = (time.clock() if clock_end == 0 else clock_end) - clock_start
             elapsed_time = time.clock() - clock_start
-            time_remaining = elapsed_time/num_frames_processed * (num_frames - num_frames_processed)
+            if num_frames_processed > 0:
+                time_remaining = elapsed_time/num_frames_processed * (num_frames - num_frames_processed)
             sys.stderr.write("\33[2K\rProcess frame {0} of {1}, {2} elapsed, {3:.1f}ms/frame, about {4} remaining"
                             .format(num_frames_processed,
                                     num_frames,
                                     time_string(elapsed_time),
-                                    elapsed_time/num_frames_processed*1000.0,
-                                    time_string(time_remaining)
+                                    elapsed_time/num_frames_processed*1000.0 if num_frames_processed > 0 else 0.0,
+                                    time_string(time_remaining) if num_frames_processed > 0 else '?'
                                     )
                             )
+            outfile.flush()
         if args.data[0].endswith("/"):
             dirname = os.path.basename(args.data[0][:-1])
         else:
             dirname = os.path.basename(args.data[0])
         output_name = dirname+".csv"
         clock_start = time.clock()
-        outfile.write("#Delta T\tAmplitude\tFrame Idx\n")
+        outfile.write("# Source data: "+", ".join(args.data))
+        outfile.write("\n#Delta T\tAmplitude\tFrame Idx\n")
         for num_frames, frame_idx, t, signal in datafile.get_all_data(args.data,
-                                                                    dataset):
+                                                                      dataset):
             #if dataset is not None and frame_idx not in dataset:
                 #continue
             try:
