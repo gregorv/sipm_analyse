@@ -241,6 +241,15 @@ if __name__ == "__main__":
         clock_start = 0
         clock_end = 0
 
+        try:
+            info = datafile.get_dta_info(args.data[0])
+            if info:
+                header = datafile.get_dta_userheader(args.data[0])
+                out_header = "# "+"\n# ".join(header)+"\n" if len(header) > 0 else ""
+                outfile.write("#Source dta-file: {0}\n## Original user header\n{1}##\n\n".format(args.data[0], out_header))
+        except Exception:
+            raise
+
         if args.quick_and_dirty:
             process_function = process_frame_quick
         else:
