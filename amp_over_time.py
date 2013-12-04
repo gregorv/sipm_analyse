@@ -88,28 +88,34 @@ def fit_decay(t, sig, t_ev, t_ev_next=None):
     #print "x_0", x_0
     #print min_idx, max_idx
 
-    def func_to_fit(t, param):
-        t_break_idx = int((param[1] - t[0])/(t[-1] - t[0])*len(t))
-        t_lin = t[:t_break_idx]
+    def func_to_fit(t, sig, param):
+        t_break_idx = max(int((param[1] - t[0])/(t[-1] - t[0])*len(t)), 0)
+        t_lin_break_idx = max(0, t_break_idx-3)
+        t_lin = t[:t_lin_break_idx]
         t_exp = t[t_break_idx:]
-        linear = t_lin*param[3] + param[4]
+        linear = param[3]*t_lin + param[4]
         exp = param[0]*np.exp(-(t_exp-param[1])/tau) + param[2]
-        return np.concatenate([linear, exp])
+        #print t_lin_break_idx, t_break_idx, sig[t_lin_break_idx:t_break_idx]
+        return np.concatenate([linear, sig[t_lin_break_idx:t_break_idx], exp])
 
     #print exp(x_0)
-    x, cov_x, infodict, mesg, ier = leastsq(lambda x: sig_sub - func_to_fit(t_sub, x),
+    x, cov_x, infodict, mesg, ier = leastsq(lambda x: sig_sub - func_to_fit(t_sub, sig_sub, x),
                                             x_0, full_output=True)
+    t_ev = x[1]
+    amplitude = abs(x[0]*np.exp((t_ev-x[1])/tau)+x[2] - x[3]*t_ev - x[4])
     ##x = x_0
     ##print mesg
     ##plt.plot(t, sig, "x-")
     #plt.plot(t_sub, sig_sub, "x-")
-    ##t_sub = np.arange(t_ev - 50, t_ev + 150)
-    #plt.plot(t_sub, func_to_fit(t_sub, x), color="red")
-    #plt.plot(t_sub, func_to_fit(t_sub, x_0), color="black")
+    ###t_sub = np.arange(t_ev - 50, t_ev + 150)
+    #plt.plot(t_sub, func_to_fit(t_sub, sig_sub, x), color="red")
+    #plt.plot(t_sub, func_to_fit(t_sub, sig_sub, x_0), color="black")
+    #fig.text(0.05, 0.97, "A={0:.1f}, t_ev={1:.0f}".format(amplitude, t_ev))
+    #fig.text(0.05, 0.91, str(x))
     #fig.savefig("test_{0}.png".format(plot_count))
-    plot_count += 1
-    fig.clf()
-    return x, cov_x, infodict, mesg, ier
+    #plot_count += 1
+    #fig.clf()
+    return t_ev, amplitude
 
 
 def process_frame(number, t, sig):
@@ -124,10 +130,8 @@ def process_frame(number, t, sig):
             t_ev_next = events[i+1]
         except IndexError:
             t_ev_next = None
-        x, cov_x, infodict, mesg, ier = fit_decay(t, sig, t_ev, t_ev_next)
+        t_ev_fit, amplitude = fit_decay(t, sig, t_ev, t_ev_next)
         #print "x_1", x
-        t_ev_fit = x[1]
-        amplitude = abs(x[0]-x[2])
         if t_ev_fit-200 < 0.0 or t_ev_fit > t[-1]:
             continue
         if amplitude > 1000.0:
