@@ -13,3 +13,13 @@ def import_raw_csv(filename):
             if line.strip().startswith('#') or not line.strip():
                 continue
             yield tuple(map(float, map(str.strip, line.split())))
+
+
+def import_csv_header(filename):
+    with open(filename) as f:
+        for line in f:
+            if not line.strip():
+                continue
+            if not line.strip().startswith('#'):
+                break
+            yield line[1:].strip()
