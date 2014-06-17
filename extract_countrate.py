@@ -102,6 +102,8 @@ if __name__ == "__main__":
         output_name = dirname+".csv"
         clock_start = time.clock()
         outfile.write("#Frame Idx\tNum Events\tTimespan(ns)\n")
+        for key, val in datafile.get_dta_userheader(args.data).iteritems():
+            outfile.write("# {0} = {1}\n".format(key, val))
         total_time = 0
         total_events = 1
         timespan = None
