@@ -14,7 +14,7 @@ import sys
 import os
 import time
 import argparse
-from amp_over_time import flankenize, collapse_flanks, integrate_signal, time_string
+from pulse import flankenize, collapse_flanks, integrate_signal, time_string
 
 
 def get_events(t, sig):

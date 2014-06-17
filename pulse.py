@@ -1,11 +1,44 @@
 
+import platform
 if platform.python_implementation() == "PyPy":
     import numpypy
 else:
     #import matplotlib.pyplot as plt
     from scipy.optimize import leastsq
-    fig = plt.figure()
+    #fig = plt.figure()
 import numpy as np
+
+
+def integrate_signal(time, signal):
+    new_sig = []
+    half_window_size = 5
+    for i in xrange(len(signal)):
+        used_samples = 0
+        sig = 0
+        for j in xrange(i-half_window_size, i+half_window_size):
+            try:
+                sig += signal[j]
+                used_samples += 1
+            except IndexError:
+                pass
+        sig /= used_samples
+        new_sig.append(sig)
+    return time, new_sig
+
+
+def time_string(seconds):
+    s = ""
+    seconds = int(seconds)
+    if (seconds / 86400) > 0:
+        s = ''.join((s, str(seconds / 86400), "d "))
+        seconds %= 86400
+    if (seconds / 3600) > 0:
+        s = ''.join((s, str(seconds / 3600), "h "))
+        seconds %= 3600
+    if (seconds / 60) > 0:
+        s = ''.join((s, str(seconds / 60), "m "))
+        seconds %= 60
+    return ''.join((s, str(seconds), "s"))
 
 
 def function_value(x, y, x_0):
