@@ -32,11 +32,19 @@ def import_frame_bin(f):
 
 
 def import_frame_txt(f):
+    headline = f.readline()
+    time_scale = 1
+    if headline.startswith("LECROY"):
+        time_scale = 1e9
+        for i in xrange(4):
+            f.readline()
+    else:
+        f.seek(0)
     time = []
     signal = []
     for l in f:
-        l = l.split(" ")
-        time.append(float(l[0]))
+        l = l.split()
+        time.append(float(l[0])*time_scale)
         signal.append(float(l[1]))
     return np.array(time), np.array(signal)
 
