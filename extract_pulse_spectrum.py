@@ -65,9 +65,9 @@ def process_frame(number, t, sig):
 def process_frame_quick(number, t, sig):
     t_start = 200
     t, smooth_signal = integrate_signal(t, sig)
-    plt.plot(t, smooth_signal)
-    plt.savefig("test.png")
-    plt.clf()
+    #plt.plot(t, smooth_signal)
+    #plt.savefig("test.png")
+    #plt.clf()
     # Get events
     a = filter(lambda x: (x[1]-x[0]) > 2 or not x[2], flankenize(t, smooth_signal))
     b = filter(lambda x: not x[2] and (smooth_signal[x[1]] - smooth_signal[x[0]]) < -5, collapse_flanks(a))
@@ -83,6 +83,18 @@ def process_frame_quick(number, t, sig):
                 in events[1:]]
     else:
         return []
+
+
+def process_frame_full_spectrum(number, t, sig):
+    t, smooth_signal = integrate_signal(t, sig)
+    a = filter(lambda x: (x[1]-x[0]) > 2 or
+               not x[2], flankenize(t, smooth_signal))
+    b = filter(lambda x: not x[2] and
+               (smooth_signal[x[1]] - smooth_signal[x[0]]) < -5,
+               collapse_flanks(a))
+    return [(t[end_idx],
+             sig[end_idx] - sig[start_idx])
+            for start_idx, end_idx, pos in b]
 
 
 def integrate_signal(time, signal):
@@ -123,6 +135,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--outfile", default='', metavar="outfile")
     parser.add_argument("-s", "--silent", default=False, action="store_true")
     parser.add_argument("-q", "--quick-and-dirty", default=False, action="store_true")
+    parser.add_argument("-S", "--full-spectrum", default=False, action="store_true", help="If set, *all* pulses in the frame are placed in output. The default is to write only the pulses after a certain initial pulse that occured in a certain time-range. The -S output is used for countrates, without it, it is usefull for time-structure analysis (after-pulsing etc.)")
     parser.add_argument("data", nargs="+", type=str)
     args = parser.parse_args()
     if args.outfile:
@@ -162,15 +175,22 @@ if __name__ == "__main__":
             info = datafile.get_dta_info(args.data[0])
             if info:
                 header = datafile.get_dta_userheader(args.data[0])
-                out_header = "# "+"\n# ".join(header)+"\n" if len(header) > 0 else ""
-                outfile.write("#Source dta-file: {0}\n## Original user header\n{1}##\n\n".format(args.data[0], out_header))
+                out_header = ("# "+"\n# ".join(("{0} = {1}".format(*k)
+                                               for k in header.iteritems())
+                                               ) + "\n"
+                              if len(header) > 0 else "")
+                out_header += "# full_spectrum_b = {0}\n".format("True" if args.full_spectrum else "False")
+                outfile.write("\n## Original user header\n{0}##\n\n".format(out_header))
         except Exception:
+            outfile.write("# full_spectrum_b = {0}\n".format("True" if args.full_spectrum else "False"))
             raise
 
         if args.quick_and_dirty:
             process_function = process_frame_quick
         else:
             process_function = process_frame
+        if args.full_spectrum:
+            process_function = process_frame_full_spectrum
 
         def print_status():
             #elapsed_time = (time.clock() if clock_end == 0 else clock_end) - clock_start
@@ -193,7 +213,7 @@ if __name__ == "__main__":
         output_name = dirname+".csv"
         clock_start = time.clock()
         outfile.write("# Source data: "+", ".join(args.data))
-        outfile.write("\n#Delta T\tAmplitude\tFrame Idx\n")
+        outfile.write("\n#Delta T(ns)\tAmplitude(mV)\tFrame Idx\n")
         for num_frames, frame_idx, t, signal in datafile.get_all_data(args.data,
                                                                       dataset):
             #if dataset is not None and frame_idx not in dataset:

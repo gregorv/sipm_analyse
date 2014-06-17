@@ -7,6 +7,24 @@ else:
     from scipy.optimize import leastsq
     #fig = plt.figure()
 import numpy as np
+from datafile import import_raw_csv
+
+
+def pulse_data_to_countrates(pulse_csv_file, event_filter=lambda x, y: True):
+    user_header = pulse_csv_file
+    frame_idx = 0
+    num_events = 0
+    for dt, amplitude, next_frame_idx in import_raw_csv(pulse_csv_file):
+        if next_frame_idx != frame_idx:
+            if num_events > 0:
+                yield frame_idx, num_events, 1498.53515625
+            frame_idx = next_frame_idx
+            num_events = 0
+        else:
+            if event_filter(dt, amplitude):
+                num_events += 1
+    if num_events > 0:
+        yield frame_idx, num_events, 1498.53515625
 
 
 def integrate_signal(time, signal):

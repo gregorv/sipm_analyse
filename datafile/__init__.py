@@ -16,6 +16,14 @@ def import_raw_csv(filename):
 
 
 def import_csv_header(filename):
+    """
+    All comments at the beginning of the files
+    are considered the header of the file.
+
+    Empty lines do not break the header!
+
+    Only non-empty, non-comment lines end the header.
+    """
     with open(filename) as f:
         for line in f:
             if not line.strip():
@@ -23,3 +31,20 @@ def import_csv_header(filename):
             if not line.strip().startswith('#'):
                 break
             yield line[1:].strip()
+
+
+def userheader2dict(header):
+    dheader = {}
+    for line in header:
+        try:
+            key, val = map(str.strip, line.split("="))
+            if key.endswith("_f"):
+                val = float(val)
+            elif key.endswith("_b"):
+                val = (val.lower() == "true")
+            dheader[key] = val
+        except Exception:
+            pass
+    return dheader
+
+

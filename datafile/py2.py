@@ -227,7 +227,6 @@ def get_all_data(arg_files, dataset=None):
             return
         except Exception, e:
             print e
-    
     for path in arg_files:
         if os.path.isdir(path):
             directories.append(path)
