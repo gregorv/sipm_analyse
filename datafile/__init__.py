@@ -10,6 +10,6 @@ elif major_version == 3:
 def import_raw_csv(filename):
     with open(filename) as f:
         for line in f:
-            if line.startswith('#') or not line:
+            if line.strip().startswith('#') or not line.strip():
                 continue
             yield tuple(map(float, map(str.strip, line.split())))
